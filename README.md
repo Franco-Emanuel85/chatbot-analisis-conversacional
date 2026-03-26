@@ -24,15 +24,15 @@ Proyecto desarrollado en Python que simula un chatbot basado en intents, registr
 ## Estructura del proyecto
 
 chatbot-analisis-conversacional/
-├── chatbot.py              # Lógica principal con A/B testing
-├── ab_testing.py           # Módulo de A/B testing
-├── intents.json            # Base de intents, patterns y respuestas
-├── cargar_logs_sql.py      # Script ETL para cargar logs a SQLite
-├── analisis_ab.sql         # Consultas SQL para análisis de A/B tests
-├── conversaciones.log      # Registro de conversaciones (generado)
-├── chatbot.db              # Base SQLite (generada)
-├── .gitignore              # Archivos ignorados por git
-└── README.md               # Este archivo
+├── chatbot.py # Lógica principal con A/B testing
+├── ab_testing.py # Módulo de A/B testing
+├── intents.json # Base de intents, patterns y respuestas
+├── cargar_logs_sql.py # Script ETL para cargar logs a SQLite
+├── analisis_ab.sql # Consultas SQL para análisis de A/B tests
+├── conversaciones.log # Registro de conversaciones (generado)
+├── chatbot.db # Base SQLite (generada)
+├── .gitignore # Archivos ignorados por git
+└── README.md # Este archivo
 
 ## Cómo usar el proyecto
 
