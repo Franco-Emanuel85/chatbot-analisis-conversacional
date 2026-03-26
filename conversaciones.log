@@ -1,0 +1,5 @@
+2026-03-26 11:34:57 | Usuario: hola | Intent: saludo | Bot: ¡Buen día! ¿Qué consulta tenés?
+2026-03-26 11:35:02 | Usuario: quiero cotizar | Intent: cotizacion_seguro | Bot: Podemos generar una cotización si me indicás el modelo del auto.
+2026-03-26 11:35:05 | Usuario: gracias | Intent: despedida | Bot: Hasta luego.
+2026-03-26 11:39:27 | Usuario: hola amigo | Intent: saludo | Bot: Hola, ¿en qué puedo ayudarte?
+2026-03-26 11:39:48 | Usuario: hola estimado | Intent: saludo | Bot: ¡Buen día! ¿Qué consulta tenés?

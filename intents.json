@@ -1,0 +1,42 @@
+{
+  "intents": [
+    {
+      "tag": "saludo",
+      "patterns": [
+        "hola",
+        "buen día",
+        "buenas",
+        "qué tal"
+      ],
+      "responses": [
+        "Hola, ¿en qué puedo ayudarte?",
+        "¡Buen día! ¿Qué consulta tenés?"
+      ]
+    },
+    {
+      "tag": "cotizacion_seguro",
+      "patterns": [
+        "quiero cotizar",
+        "precio seguro",
+        "cotizar seguro",
+        "cuánto cuesta"
+      ],
+      "responses": [
+        "Para cotizar un seguro necesito algunos datos del vehículo.",
+        "Podemos generar una cotización si me indicás el modelo del auto."
+      ]
+    },
+    {
+      "tag": "despedida",
+      "patterns": [
+        "chau",
+        "gracias",
+        "hasta luego"
+      ],
+      "responses": [
+        "Gracias por tu consulta.",
+        "Hasta luego."
+      ]
+    }
+  ]
+}
