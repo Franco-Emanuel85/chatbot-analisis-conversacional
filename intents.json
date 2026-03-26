@@ -6,10 +6,18 @@
         "hola",
         "buen día",
         "buenas",
-        "qué tal"
+        "qué tal",
+        "buenas tardes",
+        "buenas noches",
+        "hola cómo están",
+        "buen día cómo están",
+        "hola buenas",
+        "hey",
+        "buen día necesito ayuda",
+        "hola quisiera consultar"
       ],
       "responses": [
-        "Hola, ¿en qué puedo ayudarte?",
+        "¡Hola! ¿En qué puedo ayudarte hoy?",
         "¡Buen día! ¿Qué consulta tenés?"
       ]
     },
@@ -19,11 +27,27 @@
         "quiero cotizar",
         "precio seguro",
         "cotizar seguro",
-        "cuánto cuesta"
+        "cuánto cuesta",
+        "quisiera cotizar mi auto",
+        "me interesa un seguro",
+        "qué precio tiene el seguro",
+        "cuánto me saldría asegurar el auto",
+        "necesito una cotización",
+        "necesito cotizar",
+        "cuánto sale el seguro",
+        "quiero saber el precio",
+        "me pueden cotizar",
+        "quiero un seguro para mi auto",
+        "cómo cotizo",
+        "quiero información sobre precios",
+        "cuánto cuesta asegurar un auto",
+        "precio del seguro de auto",
+        "cotización de seguro",
+        "quiero contratar un seguro"
       ],
       "responses": [
-        "Para cotizar un seguro necesito algunos datos del vehículo.",
-        "Podemos generar una cotización si me indicás el modelo del auto."
+        "Para cotizar un seguro necesito algunos datos del vehículo. ¿Me indicás el modelo y el año?",
+        "Podemos generar una cotización. ¿Me decís el modelo del auto y el año de fabricación?"
       ]
     },
     {
@@ -31,11 +55,21 @@
       "patterns": [
         "chau",
         "gracias",
-        "hasta luego"
+        "hasta luego",
+        "nos vemos",
+        "muchas gracias",
+        "muchas gracias che",
+        "gracias por todo",
+        "adiós",
+        "hasta pronto",
+        "chau chau",
+        "ok gracias",
+        "listo gracias",
+        "nada más gracias"
       ],
       "responses": [
-        "Gracias por tu consulta.",
-        "Hasta luego."
+        "¡Gracias por tu consulta! Hasta luego.",
+        "Fue un placer ayudarte. ¡Hasta pronto!"
       ]
     }
   ]

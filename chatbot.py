@@ -1,40 +1,83 @@
+"""
+Chatbot conversacional con:
+  - Clasificación de intents por ML (TF-IDF + SVM)  ← NUEVO
+  - Soporte SQLite y MySQL                           ← NUEVO
+  - Sistema de A/B testing
+  - Logging de conversaciones
+"""
+
 import json
 import random
 from datetime import datetime
+
+from intent_classifier import IntentClassifier   # ← clasificador ML
+from db_manager import DatabaseManager           # ← abstracción de BD
 from ab_testing import ABTesting
 
-# Cargar dataset
-with open("intents.json", "r", encoding="utf-8") as file:
-    data = json.load(file)
 
-# Inicializar sistema de A/B testing
-ab = ABTesting()
+# ══════════════════════════════════════════════════════════════════════════════
+# CONFIGURACIÓN — editá solo esta sección
+# ══════════════════════════════════════════════════════════════════════════════
 
-# Función para guardar logs
-def guardar_log(usuario, bot, intent_tag, variant=None):
+# Cambiá a "mysql" y completá los datos para usar MySQL en lugar de SQLite
+DB_BACKEND = "sqlite"        # "sqlite" | "mysql"
+DB_CONFIG = {
+    # Solo se usan si DB_BACKEND == "mysql"
+    "host":     "localhost",
+    "port":     3306,
+    "user":     "root",
+    "password": "tu_password",
+    "database": "chatbot_db",
+    # Solo se usa si DB_BACKEND == "sqlite"
+    "db_path":  "chatbot.db",
+}
+
+INTENTS_PATH = "intents.json"
+LOG_FILE     = "conversaciones.log"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# INICIALIZACIÓN
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Base de datos
+db = DatabaseManager(backend=DB_BACKEND, **DB_CONFIG)
+db.create_tables()
+
+# Clasificador ML — entrena automáticamente al iniciarse
+classifier = IntentClassifier(intents_path=INTENTS_PATH)
+
+# A/B Testing (sigue usando DatabaseManager internamente)
+ab = ABTesting(db_path=DB_CONFIG.get("db_path", "chatbot.db"))
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# FUNCIONES
+# ══════════════════════════════════════════════════════════════════════════════
+
+def guardar_log(usuario: str, bot: str, intent_tag: str, variant: str = None):
+    """Guarda la interacción en el archivo de log y en la base de datos."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+    # Log en archivo de texto
     if variant:
         linea = f"{timestamp} | Usuario: {usuario} | Intent: {intent_tag} | Variant: {variant} | Bot: {bot}\n"
     else:
         linea = f"{timestamp} | Usuario: {usuario} | Intent: {intent_tag} | Bot: {bot}\n"
 
-    with open("conversaciones.log", "a", encoding="utf-8") as log:
+    with open(LOG_FILE, "a", encoding="utf-8") as log:
         log.write(linea)
 
-# Detectar intención
-def detectar_intencion(mensaje):
-    mensaje = mensaje.lower()
+    # Log en base de datos
+    sql = db.adapt_query("""
+        INSERT INTO conversaciones (timestamp, usuario, intent, variant, respuesta)
+        VALUES (?, ?, ?, ?, ?)
+    """)
+    with db.connection() as (conn, cursor):
+        cursor.execute(sql, (timestamp, usuario, intent_tag, variant, bot))
 
-    for intent in data["intents"]:
-        for pattern in intent["patterns"]:
-            if pattern in mensaje:
-                return intent
 
-    return None
-
-# Responder con soporte A/B testing
-def responder_con_ab(intent, session_id):
+def responder_con_ab(intent: dict, session_id: str) -> tuple[str, int, str | None]:
+    """Selecciona respuesta según variante A/B asignada al usuario."""
     responses = intent["responses"]
     tag = intent["tag"]
 
@@ -44,28 +87,53 @@ def responder_con_ab(intent, session_id):
     variant_index = ab.assign_variant(session_id, tag, len(responses))
     respuesta = responses[variant_index]
     variant_letter = chr(65 + variant_index)
-
     return respuesta, variant_index, variant_letter
 
-# Contador de interacciones
-contador_interacciones = 0
 
-print("Chatbot iniciado. Escribí 'salir' para terminar.")
-print("Comandos especiales: 'reporte' para ver resultados A/B, 'sesion' para ver ID de sesión, 'nueva_sesion' para cambiar de sesión\n")
+def mostrar_ayuda():
+    print("\nComandos disponibles:")
+    print("  reporte      → resultados de A/B testing")
+    print("  sesion       → ver ID de sesión actual")
+    print("  nueva_sesion → reiniciar sesión")
+    print("  explain <frase> → ver scores del clasificador para esa frase")
+    print("  salir        → terminar\n")
 
-# Generar ID de sesión único para esta ejecución
+
+# ══════════════════════════════════════════════════════════════════════════════
+# LOOP PRINCIPAL
+# ══════════════════════════════════════════════════════════════════════════════
+
+print("\nChatbot iniciado.")
+mostrar_ayuda()
+
 session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
 print(f"ID de sesión: {session_id}\n")
 
-while True:
-    mensaje_usuario = input("Vos: ")
+contador = 0
 
+while True:
+    try:
+        mensaje_usuario = input("Vos: ").strip()
+    except (KeyboardInterrupt, EOFError):
+        print("\nBot: Hasta luego.")
+        break
+
+    if not mensaje_usuario:
+        continue
+
+    # ── Comandos especiales ──────────────────────────────────────────────
     if mensaje_usuario.lower() == "salir":
         print("Bot: Hasta luego.")
         break
 
+    if mensaje_usuario.lower() == "ayuda":
+        mostrar_ayuda()
+        continue
+
     if mensaje_usuario.lower() == "reporte":
-        for intent in data["intents"]:
+        with open(INTENTS_PATH, "r", encoding="utf-8") as f:
+            intents_data = json.load(f)
+        for intent in intents_data["intents"]:
             if len(intent["responses"]) > 1:
                 ab.print_report(intent["tag"])
         continue
@@ -76,37 +144,41 @@ while True:
 
     if mensaje_usuario.lower() == "nueva_sesion":
         session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-        print(f"Nuevo ID de sesión: {session_id}")
+        print(f"Nueva sesión: {session_id}")
         continue
 
-    intent = detectar_intencion(mensaje_usuario)
+    if mensaje_usuario.lower().startswith("explain "):
+        frase = mensaje_usuario[8:].strip()
+        classifier.explain(frase)
+        continue
 
-    contador_interacciones += 1
+    # ── Clasificación ML ─────────────────────────────────────────────────
+    intent = classifier.predict(mensaje_usuario)
+    contador += 1
 
     if intent:
         tag = intent["tag"]
-        responses_count = len(intent["responses"])
 
-        if responses_count > 1:
+        if len(intent["responses"]) > 1:
             respuesta, variant_index, variant_letter = responder_con_ab(intent, session_id)
-            print("Bot:", respuesta)
+            print(f"Bot: {respuesta}")
             guardar_log(mensaje_usuario, respuesta, tag, variant_letter)
 
             if tag == "cotizacion_seguro":
                 ab.track_event(session_id, tag, variant_index, "conversion", "cotizacion_solicitada")
         else:
             respuesta = random.choice(intent["responses"])
-            print("Bot:", respuesta)
+            print(f"Bot: {respuesta}")
             guardar_log(mensaje_usuario, respuesta, tag)
-
     else:
-        respuesta = "No entendí la consulta. ¿Podrías reformularla?"
-        print("Bot:", respuesta)
+        respuesta = "No entendí la consulta. ¿Podrías reformularla o usar 'ayuda' para ver los comandos?"
+        print(f"Bot: {respuesta}")
         guardar_log(mensaje_usuario, respuesta, "desconocido")
 
-print("\nSesión finalizada.")
-print(f"Total de interacciones: {contador_interacciones}")
-
-for intent in data["intents"]:
+# ── Resumen de sesión ────────────────────────────────────────────────────────
+print(f"\nSesión finalizada. Interacciones: {contador}")
+with open(INTENTS_PATH, "r", encoding="utf-8") as f:
+    intents_data = json.load(f)
+for intent in intents_data["intents"]:
     if len(intent["responses"]) > 1:
         ab.print_report(intent["tag"])
